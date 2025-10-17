@@ -21,7 +21,9 @@ fn disassemble_instruction<W: Write>(
 ) -> usize {
   write!(writer, "{:04} ", offset).unwrap();
   let instruction = chunk.code[offset];
-  if instruction == OpCode::OpReturn as u8 {
+  if instruction == OpCode::OpConstant as u8 {
+    constant_instruction("OP_CONSTANT", chunk, offset, writer)
+  } else if instruction == OpCode::OpReturn as u8 {
     simple_instruction("OP_RETURN", offset, writer)
   } else {
     writeln!(writer, "Unknown opcode: {:?}", instruction).unwrap();
@@ -32,6 +34,14 @@ fn disassemble_instruction<W: Write>(
 fn simple_instruction<W: Write>(name: &str, offset: usize, writer: &mut W) -> usize {
   writeln!(writer, "{}", name).unwrap();
   offset + 1
+}
+
+fn constant_instruction<W: Write>(name: &str, chunk: &Chunk, offset: usize, writer: &mut W) -> usize {
+  let constant = chunk.code[offset + 1];
+  write!(writer, "{}         {} ", name, constant).unwrap();
+  write!(writer, "'{}'", chunk.constants.at(constant as usize)).unwrap();
+  writeln!(writer).unwrap();
+  offset + 2
 }
 
 #[cfg(test)]
@@ -49,5 +59,20 @@ mod tests {
     let output_str = String::from_utf8(output).unwrap();
     assert!(output_str.contains("== test chunk =="));
     assert!(output_str.contains("0000 OP_RETURN"));
+  }
+
+  #[test]
+  fn disassemble_op_constant_test() {
+    let mut chunk = crate::chunk::init_chunk();
+    chunk.write(OpCode::OpConstant as u8);
+    let constant = chunk.add_constant(4.5);
+    chunk.write(constant as u8);
+
+    let mut output = Vec::new();
+    disassemble_chunk(chunk, "test chunk", &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+    assert!(output_str.contains("== test chunk =="));
+    assert!(output_str.contains("OP_CONSTANT         0 '4.5'"));
   }
 }
