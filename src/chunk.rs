@@ -1,6 +1,7 @@
 use crate::value::{init_value_array, ValueArray, Value};
 
 #[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum OpCode {
   OpConstant = 0,
   OpReturn = 1,
