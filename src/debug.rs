@@ -1,5 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
-use std::io::{Write};
+use std::io::Write;
 
 pub fn disassemble_chunk<W: Write>(
   chunk: Chunk,
