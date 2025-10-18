@@ -15,7 +15,7 @@ impl ValueArray {
   }
 
   pub fn at(&self, idx: usize) -> Value {
-    self.values[idx]
+    *self.values.get(idx).expect("Index out of bounds")
   }
 }
 
