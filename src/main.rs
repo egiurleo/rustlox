@@ -1,6 +1,6 @@
 use crate::chunk::{OpCode, Chunk};
 use crate::debug::disassemble_chunk;
-use crate::vm::{init_vm, interpret};
+use crate::vm::VM;
 
 mod debug;
 
@@ -19,6 +19,6 @@ fn main() {
 
     disassemble_chunk(&chunk, "test chunk", &mut std::io::stdout());
 
-    init_vm();
-    interpret(chunk, &mut std::io::stdout());
+    let mut vm = VM::new();
+    vm.interpret(chunk, &mut std::io::stdout());
 }
