@@ -2,7 +2,7 @@ use crate::chunk::{Chunk, OpCode};
 use std::io::Write;
 
 pub fn disassemble_chunk<W: Write>(
-  chunk: Chunk,
+  chunk: &Chunk,
   name: &str,
   writer: &mut W,
 ) {
@@ -62,7 +62,7 @@ mod tests {
     chunk.write(OpCode::OpReturn as u8, 123);
 
     let mut output = Vec::new();
-    disassemble_chunk(chunk, "test chunk", &mut output);
+    disassemble_chunk(&chunk, "test chunk", &mut output);
 
     let output_str = String::from_utf8(output).unwrap();
 
@@ -83,7 +83,7 @@ mod tests {
     chunk.write(OpCode::OpReturn as u8, 123);
 
     let mut output = Vec::new();
-    disassemble_chunk(chunk, "test chunk", &mut output);
+    disassemble_chunk(&chunk, "test chunk", &mut output);
 
     let output_str = String::from_utf8(output).unwrap();
 
