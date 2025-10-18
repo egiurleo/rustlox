@@ -1,13 +1,8 @@
 pub type Value = f64;
 
+#[derive(Default)]
 pub struct ValueArray {
   values: Vec<Value>,
-}
-
-pub fn init_value_array() -> ValueArray {
-  ValueArray {
-    values: Vec::new(),
-  }
 }
 
 impl ValueArray {
@@ -30,14 +25,8 @@ mod tests {
   use super::*;
 
   #[test]
-  fn init_value_array_test() {
-    let value_array = init_value_array();
-    assert_eq!(value_array.values.len(), 0);
-  }
-
-  #[test]
   fn write_test() {
-    let mut value_array = init_value_array();
+    let mut value_array: ValueArray = Default::default();
 
     value_array.write(1.2);
     value_array.write(5.0);
@@ -49,7 +38,7 @@ mod tests {
 
   #[test]
   fn len_test() {
-    let mut value_array = init_value_array();
+    let mut value_array: ValueArray = Default::default();
 
     value_array.write(1.2);
     value_array.write(5.0);

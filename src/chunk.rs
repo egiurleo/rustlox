@@ -1,4 +1,4 @@
-use crate::value::{init_value_array, ValueArray, Value};
+use crate::value::{ValueArray, Value};
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
@@ -7,21 +7,18 @@ pub enum OpCode {
   OpReturn = 1,
 }
 
+#[derive(Default)]
 pub struct Chunk {
   pub code: Vec<u8>,
   pub constants: ValueArray,
   pub lines: Vec<usize>,
 }
 
-pub fn init_chunk() -> Chunk {
-  Chunk {
-    code: Vec::new(),
-    constants: init_value_array(),
-    lines: Vec::new(),
-  }
-}
-
 impl Chunk {
+  pub fn new() -> Self {
+    Default::default()
+  }
+
   pub fn write(&mut self, byte: u8, line: usize) {
     self.code.push(byte);
     self.lines.push(line);
@@ -39,7 +36,7 @@ mod tests {
 
   #[test]
   fn init_chunk_test() {
-    let chunk = init_chunk();
+    let chunk = Chunk::new();
     assert_eq!(chunk.code.len(), 0);
     assert_eq!(chunk.constants.len(), 0);
     assert_eq!(chunk.lines.len(), 0);
@@ -47,7 +44,7 @@ mod tests {
 
   #[test]
   fn write_test() {
-    let mut chunk = init_chunk();
+    let mut chunk: Chunk = Chunk::new();
     chunk.write(OpCode::OpReturn as u8, 123);
     chunk.write(OpCode::OpConstant as u8, 124);
 
@@ -63,7 +60,7 @@ mod tests {
 
   #[test]
   fn add_constant_test() {
-    let mut chunk = init_chunk();
+    let mut chunk: Chunk = Chunk::new();
     let result = chunk.add_constant(4.3);
 
     assert_eq!(result, 0);

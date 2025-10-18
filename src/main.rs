@@ -1,4 +1,4 @@
-use crate::chunk::{init_chunk, OpCode};
+use crate::chunk::{OpCode, Chunk};
 use crate::debug::disassemble_chunk;
 
 mod debug;
@@ -7,7 +7,7 @@ mod chunk;
 mod value;
 
 fn main() {
-    let mut chunk = init_chunk();
+    let mut chunk = Chunk::new();
 
     let constant = chunk.add_constant(1.2);
     chunk.write(OpCode::OpConstant as u8, 123);

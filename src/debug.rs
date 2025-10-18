@@ -58,7 +58,7 @@ mod tests {
 
   #[test]
   fn disassemble_op_return_test() {
-    let mut chunk = crate::chunk::init_chunk();
+    let mut chunk = Chunk::new();
     chunk.write(OpCode::OpReturn as u8, 123);
 
     let mut output = Vec::new();
@@ -74,7 +74,7 @@ mod tests {
 
   #[test]
   fn disassemble_op_constant_test() {
-    let mut chunk = crate::chunk::init_chunk();
+    let mut chunk = Chunk::new();
 
     let constant = chunk.add_constant(1.2);
     chunk.write(OpCode::OpConstant as u8, 123);
