@@ -14,7 +14,7 @@ pub fn disassemble_chunk<W: Write>(
   }
 }
 
-fn disassemble_instruction<W: Write>(
+pub fn disassemble_instruction<W: Write>(
   chunk: &Chunk,
   offset: usize,
   writer: &mut W,

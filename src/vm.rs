@@ -1,6 +1,10 @@
 use crate::chunk::{Chunk, OpCode};
 use crate::value::Value;
+use crate::debug::disassemble_instruction;
 use std::io::Write;
+
+const DEBUG_TRACE: bool =
+  option_env!("DEBUG_TRACE_EXECUTION").is_some();
 
 pub enum InterpretResult {
   InterpretOk = 0,
@@ -30,6 +34,10 @@ impl VM {
     let mut instruction: u8;
 
     loop {
+      if DEBUG_TRACE {
+        disassemble_instruction(&self.chunk, self.ip as usize, writer);
+      }
+
       instruction = self.read_byte();
       if instruction == OpCode::OpConstant as u8 {
         let constant = self.read_constant();
