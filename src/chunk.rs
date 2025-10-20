@@ -1,11 +1,16 @@
 use crate::value::{ValueArray, Value};
+use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, TryFromPrimitive)]
 pub enum OpCode {
   OpConstant = 0,
-  OpNegate = 1,
-  OpReturn = 2,
+  OpAdd = 1,
+  OpSubtract = 2,
+  OpMultiply = 3,
+  OpDivide = 4,
+  OpNegate = 5,
+  OpReturn = 6,
 }
 
 #[derive(Default)]

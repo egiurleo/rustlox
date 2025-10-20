@@ -74,17 +74,38 @@ impl VM {
       }
 
       instruction = self.read_byte();
-      if instruction == OpCode::OpConstant as u8 {
-        let constant = self.read_constant();
-        self.push(constant);
-      } else if instruction == OpCode::OpNegate as u8 {
-        let pop = self.pop();
-        self.push(-1.0 * pop);
-      } else if instruction == OpCode::OpReturn as u8 {
-        writeln!(writer, "{}", self.pop()).unwrap();
-        return InterpretResult::InterpretOk;
+
+      match OpCode::try_from(instruction) {
+        Ok(OpCode::OpConstant) => {
+          let constant = self.read_constant();
+          self.push(constant);
+        },
+        Ok(OpCode::OpAdd) => self.binary_op(|a, b| a + b),
+        Ok(OpCode::OpSubtract) => self.binary_op(|a, b| a - b),
+        Ok(OpCode::OpMultiply) => self.binary_op(|a, b| a * b),
+        Ok(OpCode::OpDivide) => self.binary_op(|a, b| a / b),
+        Ok(OpCode::OpNegate) => {
+          let pop = self.pop();
+          self.push(-1.0 * pop);
+        },
+        Ok(OpCode::OpReturn) => {
+          writeln!(writer, "{}", self.pop()).unwrap();
+          return InterpretResult::InterpretOk;
+        },
+        Err(_) => panic!("Unknown opcode: {}", instruction),
       }
     }
+  }
+
+
+  #[inline]
+  fn binary_op<F>(&mut self, op: F)
+  where
+    F: Fn(Value, Value) -> Value
+  {
+    let b = self.pop();
+    let a = self.pop();
+    self.push(op(a, b));
   }
 
   #[inline]
@@ -148,5 +169,121 @@ mod tests {
     }
 
     assert_eq!(output_str, "-1.2\n");
+  }
+
+  #[test]
+  fn interpret_addition_test() {
+    let mut vm = VM::new();
+
+    let mut chunk = Chunk::new();
+    let mut constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(2.3);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpAdd as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    let result = vm.interpret(chunk, &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    match result {
+      InterpretResult::InterpretOk => assert!(true),
+    }
+
+    assert_eq!(output_str, "3.5\n");
+  }
+
+  #[test]
+  fn interpret_subtraction_test() {
+    let mut vm = VM::new();
+
+    let mut chunk = Chunk::new();
+    let mut constant = chunk.add_constant(1.5);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(0.3);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpSubtract as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    let result = vm.interpret(chunk, &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    match result {
+      InterpretResult::InterpretOk => assert!(true),
+    }
+
+    assert_eq!(output_str, "1.2\n");
+  }
+
+  #[test]
+  fn interpret_multiplication_test() {
+    let mut vm = VM::new();
+
+    let mut chunk = Chunk::new();
+    let mut constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(2.0);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpMultiply as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    let result = vm.interpret(chunk, &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    match result {
+      InterpretResult::InterpretOk => assert!(true),
+    }
+
+    assert_eq!(output_str, "2.4\n");
+  }
+
+  #[test]
+  fn interpret_division_test() {
+    let mut vm = VM::new();
+
+    let mut chunk = Chunk::new();
+    let mut constant = chunk.add_constant(2.4);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(2.0);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpDivide as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    let result = vm.interpret(chunk, &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    match result {
+      InterpretResult::InterpretOk => assert!(true),
+    }
+
+    assert_eq!(output_str, "1.2\n");
   }
 }
