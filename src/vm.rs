@@ -44,7 +44,7 @@ impl VM {
     self.run(writer)
   }
 
-  pub fn reset_stack(&mut self) {
+  pub fn _reset_stack(&mut self) {
     self.stack_top = 0;
   }
 
