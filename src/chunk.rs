@@ -4,7 +4,8 @@ use crate::value::{ValueArray, Value};
 #[derive(Copy, Clone)]
 pub enum OpCode {
   OpConstant = 0,
-  OpReturn = 1,
+  OpNegate = 1,
+  OpReturn = 2,
 }
 
 #[derive(Default)]

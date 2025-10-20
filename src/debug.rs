@@ -31,6 +31,8 @@ pub fn disassemble_instruction<W: Write>(
 
   if instruction == OpCode::OpConstant as u8 {
     constant_instruction("OP_CONSTANT", chunk, offset, writer)
+  } else if instruction == OpCode::OpNegate as u8 {
+    simple_instruction("OP_NEGATE", offset, writer)
   } else if instruction == OpCode::OpReturn as u8 {
     simple_instruction("OP_RETURN", offset, writer)
   } else {
@@ -90,6 +92,30 @@ mod tests {
     let expectation = "== test chunk ==\n\
     0000  123 OP_CONSTANT         0 '1.2'\n\
     0002    | OP_RETURN\n";
+
+    assert_eq!(output_str, expectation);
+  }
+
+  #[test]
+  fn disassemble_op_negate_test() {
+    let mut chunk = Chunk::new();
+
+    let constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+    chunk.write(OpCode::OpNegate as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    let expectation = "== test chunk ==\n\
+    0000  123 OP_CONSTANT         0 '1.2'\n\
+    0002    | OP_NEGATE\n\
+    0003    | OP_RETURN\n";
 
     assert_eq!(output_str, expectation);
   }

@@ -77,6 +77,9 @@ impl VM {
       if instruction == OpCode::OpConstant as u8 {
         let constant = self.read_constant();
         self.push(constant);
+      } else if instruction == OpCode::OpNegate as u8 {
+        let pop = self.pop();
+        self.push(-1.0 * pop);
       } else if instruction == OpCode::OpReturn as u8 {
         writeln!(writer, "{}", self.pop()).unwrap();
         return InterpretResult::InterpretOk;
@@ -103,7 +106,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn interpret_test() {
+  fn interpret_constant_test() {
     let mut vm = VM::new();
 
     let mut chunk = Chunk::new();
@@ -122,5 +125,28 @@ mod tests {
     }
 
     assert_eq!(output_str, "1.2\n");
+  }
+
+  #[test]
+  fn interpret_negation_test() {
+    let mut vm = VM::new();
+
+    let mut chunk = Chunk::new();
+    let constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+    chunk.write(OpCode::OpNegate as u8, 123);
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    let result = vm.interpret(chunk, &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    match result {
+      InterpretResult::InterpretOk => assert!(true),
+    }
+
+    assert_eq!(output_str, "-1.2\n");
   }
 }
