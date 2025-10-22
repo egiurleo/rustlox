@@ -4,13 +4,13 @@ use num_enum::TryFromPrimitive;
 #[repr(u8)]
 #[derive(Copy, Clone, TryFromPrimitive)]
 pub enum OpCode {
-  OpConstant = 0,
-  OpAdd = 1,
-  OpSubtract = 2,
-  OpMultiply = 3,
-  OpDivide = 4,
-  OpNegate = 5,
-  OpReturn = 6,
+  Constant = 0,
+  Add = 1,
+  Subtract = 2,
+  Multiply = 3,
+  Divide = 4,
+  Negate = 5,
+  Return = 6,
 }
 
 #[derive(Default)]
@@ -51,16 +51,16 @@ mod tests {
   #[test]
   fn write_test() {
     let mut chunk: Chunk = Chunk::new();
-    chunk.write(OpCode::OpReturn as u8, 123);
-    chunk.write(OpCode::OpConstant as u8, 124);
+    chunk.write(OpCode::Return as u8, 123);
+    chunk.write(OpCode::Constant as u8, 124);
 
     assert_eq!(chunk.code.len(), 2);
     assert_eq!(chunk.lines.len(), 2);
 
-    assert_eq!(chunk.code[0], OpCode::OpReturn as u8);
+    assert_eq!(chunk.code[0], OpCode::Return as u8);
     assert_eq!(chunk.lines[0], 123);
 
-    assert_eq!(chunk.code[1], OpCode::OpConstant as u8);
+    assert_eq!(chunk.code[1], OpCode::Constant as u8);
     assert_eq!(chunk.lines[1], 124);
   }
 

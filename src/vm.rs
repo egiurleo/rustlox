@@ -68,7 +68,7 @@ impl VM {
           let value = self.stack.get(i).expect("Stack index out of bounds");
           write!(writer, "[ {} ]", value).unwrap();
         }
-        write!(writer, "\n").unwrap();
+        writeln!(writer).unwrap();
 
         disassemble_instruction(&self.chunk, self.ip as usize, writer);
       }
@@ -76,19 +76,19 @@ impl VM {
       instruction = self.read_byte();
 
       match OpCode::try_from(instruction) {
-        Ok(OpCode::OpConstant) => {
+        Ok(OpCode::Constant) => {
           let constant = self.read_constant();
           self.push(constant);
         },
-        Ok(OpCode::OpAdd) => self.binary_op(|a, b| a + b),
-        Ok(OpCode::OpSubtract) => self.binary_op(|a, b| a - b),
-        Ok(OpCode::OpMultiply) => self.binary_op(|a, b| a * b),
-        Ok(OpCode::OpDivide) => self.binary_op(|a, b| a / b),
-        Ok(OpCode::OpNegate) => {
+        Ok(OpCode::Add) => self.binary_op(|a, b| a + b),
+        Ok(OpCode::Subtract) => self.binary_op(|a, b| a - b),
+        Ok(OpCode::Multiply) => self.binary_op(|a, b| a * b),
+        Ok(OpCode::Divide) => self.binary_op(|a, b| a / b),
+        Ok(OpCode::Negate) => {
           let pop = self.pop();
-          self.push(-1.0 * pop);
+          self.push(-pop);
         },
-        Ok(OpCode::OpReturn) => {
+        Ok(OpCode::Return) => {
           writeln!(writer, "{}", self.pop()).unwrap();
           return InterpretResult::InterpretOk;
         },
@@ -132,9 +132,9 @@ mod tests {
 
     let mut chunk = Chunk::new();
     let constant = chunk.add_constant(1.2);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
-    chunk.write(OpCode::OpReturn as u8, 123);
+    chunk.write(OpCode::Return as u8, 123);
 
     let mut output = Vec::new();
     let result = vm.interpret(chunk, &mut output);
@@ -154,10 +154,10 @@ mod tests {
 
     let mut chunk = Chunk::new();
     let constant = chunk.add_constant(1.2);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
-    chunk.write(OpCode::OpNegate as u8, 123);
-    chunk.write(OpCode::OpReturn as u8, 123);
+    chunk.write(OpCode::Negate as u8, 123);
+    chunk.write(OpCode::Return as u8, 123);
 
     let mut output = Vec::new();
     let result = vm.interpret(chunk, &mut output);
@@ -177,16 +177,16 @@ mod tests {
 
     let mut chunk = Chunk::new();
     let mut constant = chunk.add_constant(1.2);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
     constant = chunk.add_constant(2.3);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
-    chunk.write(OpCode::OpAdd as u8, 123);
+    chunk.write(OpCode::Add as u8, 123);
 
-    chunk.write(OpCode::OpReturn as u8, 123);
+    chunk.write(OpCode::Return as u8, 123);
 
     let mut output = Vec::new();
     let result = vm.interpret(chunk, &mut output);
@@ -206,16 +206,16 @@ mod tests {
 
     let mut chunk = Chunk::new();
     let mut constant = chunk.add_constant(1.5);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
     constant = chunk.add_constant(0.3);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
-    chunk.write(OpCode::OpSubtract as u8, 123);
+    chunk.write(OpCode::Subtract as u8, 123);
 
-    chunk.write(OpCode::OpReturn as u8, 123);
+    chunk.write(OpCode::Return as u8, 123);
 
     let mut output = Vec::new();
     let result = vm.interpret(chunk, &mut output);
@@ -235,16 +235,16 @@ mod tests {
 
     let mut chunk = Chunk::new();
     let mut constant = chunk.add_constant(1.2);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
     constant = chunk.add_constant(2.0);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
-    chunk.write(OpCode::OpMultiply as u8, 123);
+    chunk.write(OpCode::Multiply as u8, 123);
 
-    chunk.write(OpCode::OpReturn as u8, 123);
+    chunk.write(OpCode::Return as u8, 123);
 
     let mut output = Vec::new();
     let result = vm.interpret(chunk, &mut output);
@@ -264,16 +264,16 @@ mod tests {
 
     let mut chunk = Chunk::new();
     let mut constant = chunk.add_constant(2.4);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
     constant = chunk.add_constant(2.0);
-    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(OpCode::Constant as u8, 123);
     chunk.write(constant as u8, 123);
 
-    chunk.write(OpCode::OpDivide as u8, 123);
+    chunk.write(OpCode::Divide as u8, 123);
 
-    chunk.write(OpCode::OpReturn as u8, 123);
+    chunk.write(OpCode::Return as u8, 123);
 
     let mut output = Vec::new();
     let result = vm.interpret(chunk, &mut output);
