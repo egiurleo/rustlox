@@ -1,0 +1,13 @@
+{
+  // Format on save
+  "editor.formatOnSave": true,
+
+  // Use rust-analyzer as the default formatter for Rust files
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+  },
+
+  // Run clippy on save (optional - remove if too intrusive)
+  "rust-analyzer.checkOnSave.command": "clippy"
+}
