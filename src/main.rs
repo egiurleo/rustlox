@@ -1,4 +1,4 @@
-use crate::chunk::{OpCode, Chunk};
+use crate::chunk::{Chunk, OpCode};
 use crate::vm::VM;
 
 mod debug;
