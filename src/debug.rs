@@ -1,8 +1,8 @@
 use crate::chunk::{Chunk, OpCode};
 use std::io::Write;
 
-pub fn disassemble_chunk<W: Write>(
-  chunk: Chunk,
+pub fn _disassemble_chunk<W: Write>(
+  chunk: &Chunk,
   name: &str,
   writer: &mut W,
 ) {
@@ -14,7 +14,7 @@ pub fn disassemble_chunk<W: Write>(
   }
 }
 
-fn disassemble_instruction<W: Write>(
+pub fn disassemble_instruction<W: Write>(
   chunk: &Chunk,
   offset: usize,
   writer: &mut W,
@@ -27,15 +27,20 @@ fn disassemble_instruction<W: Write>(
     write!(writer, " {} ", chunk.lines[offset]).unwrap();
   }
 
-  let instruction = chunk.code[offset];
+  let instruction = *chunk.code.get(offset).expect("Index out of bounds");
 
-  if instruction == OpCode::OpConstant as u8 {
-    constant_instruction("OP_CONSTANT", chunk, offset, writer)
-  } else if instruction == OpCode::OpReturn as u8 {
-    simple_instruction("OP_RETURN", offset, writer)
-  } else {
-    writeln!(writer, "Unknown opcode: {:?}", instruction).unwrap();
-    offset + 1
+  match OpCode::try_from(instruction) {
+    Ok(OpCode::OpConstant) => constant_instruction("OP_CONSTANT", chunk, offset, writer),
+    Ok(OpCode::OpAdd) => simple_instruction("OP_ADD", offset, writer),
+    Ok(OpCode::OpSubtract) => simple_instruction("OP_SUBTRACT", offset, writer),
+    Ok(OpCode::OpMultiply) => simple_instruction("OP_MULTIPLY", offset, writer),
+    Ok(OpCode::OpDivide) => simple_instruction("OP_DIVIDE", offset, writer),
+    Ok(OpCode::OpNegate) => simple_instruction("OP_NEGATE", offset, writer),
+    Ok(OpCode::OpReturn) => simple_instruction("OP_RETURN", offset, writer),
+    Err(_) => {
+      writeln!(writer, "Unknown opcode: {:?}", instruction).unwrap();
+      offset + 1
+    }
   }
 }
 
@@ -62,7 +67,7 @@ mod tests {
     chunk.write(OpCode::OpReturn as u8, 123);
 
     let mut output = Vec::new();
-    disassemble_chunk(chunk, "test chunk", &mut output);
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
 
     let output_str = String::from_utf8(output).unwrap();
 
@@ -83,13 +88,157 @@ mod tests {
     chunk.write(OpCode::OpReturn as u8, 123);
 
     let mut output = Vec::new();
-    disassemble_chunk(chunk, "test chunk", &mut output);
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
 
     let output_str = String::from_utf8(output).unwrap();
 
     let expectation = "== test chunk ==\n\
     0000  123 OP_CONSTANT         0 '1.2'\n\
     0002    | OP_RETURN\n";
+
+    assert_eq!(output_str, expectation);
+  }
+
+  #[test]
+  fn disassemble_op_negate_test() {
+    let mut chunk = Chunk::new();
+
+    let constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+    chunk.write(OpCode::OpNegate as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    let expectation = "== test chunk ==\n\
+    0000  123 OP_CONSTANT         0 '1.2'\n\
+    0002    | OP_NEGATE\n\
+    0003    | OP_RETURN\n";
+
+    assert_eq!(output_str, expectation);
+  }
+
+  #[test]
+  fn disassemble_op_add_test() {
+    let mut chunk = Chunk::new();
+
+    let mut constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(5.3);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpAdd as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    let expectation = "== test chunk ==\n\
+    0000  123 OP_CONSTANT         0 '1.2'\n\
+    0002    | OP_CONSTANT         1 '5.3'\n\
+    0004    | OP_ADD\n\
+    0005    | OP_RETURN\n";
+
+    assert_eq!(output_str, expectation);
+  }
+
+  #[test]
+  fn disassemble_op_subtract_test() {
+    let mut chunk = Chunk::new();
+
+    let mut constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(5.3);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpSubtract as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    let expectation = "== test chunk ==\n\
+    0000  123 OP_CONSTANT         0 '1.2'\n\
+    0002    | OP_CONSTANT         1 '5.3'\n\
+    0004    | OP_SUBTRACT\n\
+    0005    | OP_RETURN\n";
+
+    assert_eq!(output_str, expectation);
+  }
+
+  #[test]
+  fn disassemble_op_multiply_test() {
+    let mut chunk = Chunk::new();
+
+    let mut constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(5.3);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpMultiply as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    let expectation = "== test chunk ==\n\
+    0000  123 OP_CONSTANT         0 '1.2'\n\
+    0002    | OP_CONSTANT         1 '5.3'\n\
+    0004    | OP_MULTIPLY\n\
+    0005    | OP_RETURN\n";
+
+    assert_eq!(output_str, expectation);
+  }
+
+  #[test]
+  fn disassemble_op_divide_test() {
+    let mut chunk = Chunk::new();
+
+    let mut constant = chunk.add_constant(1.2);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    constant = chunk.add_constant(5.3);
+    chunk.write(OpCode::OpConstant as u8, 123);
+    chunk.write(constant as u8, 123);
+
+    chunk.write(OpCode::OpMultiply as u8, 123);
+
+    chunk.write(OpCode::OpReturn as u8, 123);
+
+    let mut output = Vec::new();
+    _disassemble_chunk(&chunk, "test chunk", &mut output);
+
+    let output_str = String::from_utf8(output).unwrap();
+
+    let expectation = "== test chunk ==\n\
+    0000  123 OP_CONSTANT         0 '1.2'\n\
+    0002    | OP_CONSTANT         1 '5.3'\n\
+    0004    | OP_MULTIPLY\n\
+    0005    | OP_RETURN\n";
 
     assert_eq!(output_str, expectation);
   }
