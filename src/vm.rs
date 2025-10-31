@@ -1,4 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::compiler::compile;
 use crate::debug::disassemble_instruction;
 use crate::value::Value;
 use std::io::Write;
@@ -7,10 +8,11 @@ const DEBUG_TRACE: bool = option_env!("DEBUG_TRACE_EXECUTION").is_some();
 
 const STACK_MAX: usize = 256;
 
+#[derive(PartialEq)]
 pub enum InterpretResult {
     InterpretOk = 0,
-    // InterpretCompileError = 1,
-    // InterpretRuntimeError = 2,
+    InterpretCompileError = 1,
+    InterpretRuntimeError = 2,
 }
 
 pub struct VM {
@@ -36,11 +38,9 @@ impl VM {
         Default::default()
     }
 
-    pub fn interpret<W: Write>(&mut self, chunk: Chunk, writer: &mut W) -> InterpretResult {
-        self.chunk = chunk;
-        self.ip = 0;
-
-        self.run(writer)
+    pub fn interpret<W: Write>(&mut self, source: String, writer: &mut W) -> InterpretResult {
+        compile(source);
+        InterpretResult::InterpretOk
     }
 
     pub fn _reset_stack(&mut self) {
