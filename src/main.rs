@@ -44,20 +44,18 @@ fn run_file(path: &String, vm: &mut VM) {
     let source = read_file(path);
     let result = vm.interpret(source, &mut std::io::stdout());
 
-    if result == InterpretResult::InterpretCompileError {
+    if result == InterpretResult::CompileError {
         exit(65);
     }
 
-    if result == InterpretResult::InterpretRuntimeError {
+    if result == InterpretResult::RuntimeError {
         exit(70);
     }
 }
 
 fn read_file(path: &String) -> String {
     match fs::read_to_string(path) {
-        Ok(source) => {
-            return source;
-        }
+        Ok(source) => source,
         Err(e) => {
             eprintln!("Error reading file: {}", e);
             exit(74);

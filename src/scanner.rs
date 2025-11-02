@@ -1,5 +1,3 @@
-use core::panic;
-
 use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
@@ -47,7 +45,7 @@ pub enum TokenType {
     True = 35,
     Var = 36,
     While = 37,
-    EOF = 38,
+    Eof = 38,
 }
 
 pub struct Token {
@@ -95,7 +93,7 @@ impl Scanner {
 
         self.start = self.current;
         if self.is_at_end() {
-            return self.make_token(TokenType::EOF);
+            return self.make_token(TokenType::Eof);
         }
 
         let c = self.advance();
@@ -109,17 +107,17 @@ impl Scanner {
         }
 
         match c {
-            b'(' => return self.make_token(TokenType::LeftParen),
-            b')' => return self.make_token(TokenType::RightParen),
-            b'{' => return self.make_token(TokenType::LeftBrace),
-            b'}' => return self.make_token(TokenType::RightBrace),
-            b';' => return self.make_token(TokenType::Semicolon),
-            b',' => return self.make_token(TokenType::Comma),
-            b'.' => return self.make_token(TokenType::Dot),
-            b'-' => return self.make_token(TokenType::Minus),
-            b'+' => return self.make_token(TokenType::Plus),
-            b'/' => return self.make_token(TokenType::Slash),
-            b'*' => return self.make_token(TokenType::Star),
+            b'(' => self.make_token(TokenType::LeftParen),
+            b')' => self.make_token(TokenType::RightParen),
+            b'{' => self.make_token(TokenType::LeftBrace),
+            b'}' => self.make_token(TokenType::RightBrace),
+            b';' => self.make_token(TokenType::Semicolon),
+            b',' => self.make_token(TokenType::Comma),
+            b'.' => self.make_token(TokenType::Dot),
+            b'-' => self.make_token(TokenType::Minus),
+            b'+' => self.make_token(TokenType::Plus),
+            b'/' => self.make_token(TokenType::Slash),
+            b'*' => self.make_token(TokenType::Star),
             b'!' => {
                 let token_type = if self.matches(b'=') {
                     TokenType::BangEqual
@@ -152,7 +150,7 @@ impl Scanner {
                 };
                 self.make_token(token_type)
             }
-            b'"' => return self.string(),
+            b'"' => self.string(),
             _ => Err(ScanError::UnexpectedChar { line: self.line }),
         }
     }
@@ -212,7 +210,7 @@ impl Scanner {
         if self.peek() == b'.' && self.is_digit(self.peek_next()) {
             self.advance();
 
-            while (self.is_digit(self.peek())) {
+            while self.is_digit(self.peek()) {
                 self.advance();
             }
         }
@@ -328,11 +326,11 @@ impl Scanner {
     }
 
     fn is_digit(&self, c: u8) -> bool {
-        c >= b'0' && c <= b'9'
+        c.is_ascii_digit()
     }
 
     fn is_alpha(&self, c: u8) -> bool {
-        (c >= b'a' && c <= b'z') || (c >= b'A' && c <= b'Z') || c == b'_'
+        c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
     }
 }
 

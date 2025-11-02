@@ -10,9 +10,9 @@ const STACK_MAX: usize = 256;
 
 #[derive(PartialEq, Debug)]
 pub enum InterpretResult {
-    InterpretOk = 0,
-    InterpretCompileError = 1,
-    InterpretRuntimeError = 2,
+    Ok = 0,
+    CompileError = 1,
+    RuntimeError = 2,
 }
 
 pub struct VM {
@@ -40,7 +40,7 @@ impl VM {
 
     pub fn interpret<W: Write>(&mut self, source: String, writer: &mut W) -> InterpretResult {
         compile(source);
-        InterpretResult::InterpretOk
+        InterpretResult::Ok
     }
 
     pub fn _reset_stack(&mut self) {
@@ -92,7 +92,7 @@ impl VM {
                 }
                 Ok(OpCode::Return) => {
                     writeln!(writer, "{}", self.pop()).unwrap();
-                    return InterpretResult::InterpretOk;
+                    return InterpretResult::Ok;
                 }
                 Err(_) => panic!("Unknown opcode: {}", instruction),
             }
@@ -138,7 +138,7 @@ mod tests {
         let source = "1.2".to_string();
 
         let result = vm.interpret(source, &mut output);
-        assert_eq!(result, InterpretResult::InterpretOk);
+        assert_eq!(result, InterpretResult::Ok);
 
         let output_str = String::from_utf8(output).unwrap();
         assert_eq!(output_str, "1.2\n");
@@ -151,7 +151,7 @@ mod tests {
         let source = "return -1.2".to_string();
 
         let result = vm.interpret(source, &mut output);
-        assert_eq!(result, InterpretResult::InterpretOk);
+        assert_eq!(result, InterpretResult::Ok);
 
         let output_str = String::from_utf8(output).unwrap();
         assert_eq!(output_str, "-1.2\n");
@@ -164,7 +164,7 @@ mod tests {
         let source = "return 1.2 + 2.3".to_string();
 
         let result = vm.interpret(source, &mut output);
-        assert_eq!(result, InterpretResult::InterpretOk);
+        assert_eq!(result, InterpretResult::Ok);
 
         let output_str = String::from_utf8(output).unwrap();
         assert_eq!(output_str, "3.5\n");
@@ -177,7 +177,7 @@ mod tests {
         let source = "return 1.5 - 0.3".to_string();
 
         let result = vm.interpret(source, &mut output);
-        assert_eq!(result, InterpretResult::InterpretOk);
+        assert_eq!(result, InterpretResult::Ok);
 
         let output_str = String::from_utf8(output).unwrap();
         assert_eq!(output_str, "1.2\n");
@@ -190,7 +190,7 @@ mod tests {
         let source = "return 1.2 * 2.0".to_string();
 
         let result = vm.interpret(source, &mut output);
-        assert_eq!(result, InterpretResult::InterpretOk);
+        assert_eq!(result, InterpretResult::Ok);
 
         let output_str = String::from_utf8(output).unwrap();
         assert_eq!(output_str, "2.4\n");
@@ -203,7 +203,7 @@ mod tests {
         let source = "return 2.4 / 2.0".to_string();
 
         let result = vm.interpret(source, &mut output);
-        assert_eq!(result, InterpretResult::InterpretOk);
+        assert_eq!(result, InterpretResult::Ok);
 
         let output_str = String::from_utf8(output).unwrap();
         assert_eq!(output_str, "1.2\n");
