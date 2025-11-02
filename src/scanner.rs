@@ -1,4 +1,3 @@
-use crate::helpers::{is_alpha, is_digit};
 use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
@@ -331,6 +330,14 @@ impl Scanner {
         }
         self.source[self.current + 1]
     }
+}
+
+fn is_digit(c: u8) -> bool {
+    c.is_ascii_digit()
+}
+
+fn is_alpha(c: u8) -> bool {
+    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
 }
 
 #[cfg(test)]
