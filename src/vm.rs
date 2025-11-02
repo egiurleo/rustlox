@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::chunk::{Chunk, OpCode};
 use crate::compiler::compile;
 use crate::debug::disassemble_instruction;
