@@ -1,3 +1,5 @@
+use core::panic;
+
 use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
@@ -97,6 +99,10 @@ impl Scanner {
         }
 
         let c = self.advance();
+
+        if self.is_alpha(c) {
+            return self.identifier();
+        }
 
         if self.is_digit(c) {
             return self.number();
@@ -214,6 +220,70 @@ impl Scanner {
         self.make_token(TokenType::Number)
     }
 
+    fn identifier(&mut self) -> Result<Token, ScanError> {
+        while self.is_alpha(self.peek()) || self.is_digit(self.peek()) {
+            self.advance();
+        }
+
+        self.make_token(self.identifier_type())
+    }
+
+    fn identifier_type(&self) -> TokenType {
+        match self.source[self.start] {
+            b'a' => self.check_keyword(1, 2, b"nd", TokenType::And),
+            b'c' => self.check_keyword(1, 4, b"lass", TokenType::Class),
+            b'e' => self.check_keyword(1, 3, b"lse", TokenType::Else),
+            b'f' => {
+                if self.current - self.start > 1 {
+                    match self.source[self.start + 1] {
+                        b'a' => self.check_keyword(2, 3, b"lse", TokenType::False),
+                        b'o' => self.check_keyword(2, 1, b"r", TokenType::For),
+                        b'u' => self.check_keyword(2, 1, b"n", TokenType::Fun),
+                        _ => TokenType::Identifier,
+                    }
+                } else {
+                    TokenType::Identifier
+                }
+            }
+            b'i' => self.check_keyword(1, 1, b"f", TokenType::If),
+            b'n' => self.check_keyword(1, 2, b"il", TokenType::Nil),
+            b'o' => self.check_keyword(1, 1, b"r", TokenType::Or),
+            b'p' => self.check_keyword(1, 4, b"rint", TokenType::Print),
+            b'r' => self.check_keyword(1, 5, b"eturn", TokenType::Return),
+            b's' => self.check_keyword(1, 4, b"uper", TokenType::Super),
+            b't' => {
+                if self.current - self.start > 1 {
+                    match self.source[self.start + 1] {
+                        b'h' => self.check_keyword(2, 2, b"is", TokenType::This),
+                        b'r' => self.check_keyword(2, 2, b"ue", TokenType::True),
+                        _ => TokenType::Identifier,
+                    }
+                } else {
+                    TokenType::Identifier
+                }
+            }
+            b'v' => self.check_keyword(1, 2, b"ar", TokenType::Var),
+            b'w' => self.check_keyword(1, 4, b"hile", TokenType::While),
+            _ => TokenType::Identifier,
+        }
+    }
+
+    fn check_keyword(
+        &self,
+        start: usize,
+        length: usize,
+        rest: &[u8],
+        token_type: TokenType,
+    ) -> TokenType {
+        if self.current - self.start == start + length
+            && &self.source[self.start + start..self.start + start + length] == rest
+        {
+            return token_type;
+        }
+
+        TokenType::Identifier
+    }
+
     fn skip_whitespace(&mut self) {
         loop {
             let c = self.peek();
@@ -259,6 +329,10 @@ impl Scanner {
 
     fn is_digit(&self, c: u8) -> bool {
         c >= b'0' && c <= b'9'
+    }
+
+    fn is_alpha(&self, c: u8) -> bool {
+        (c >= b'a' && c <= b'z') || (c >= b'A' && c <= b'Z') || c == b'_'
     }
 }
 
