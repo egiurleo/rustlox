@@ -12,7 +12,9 @@ pub fn compile(source: String) {
                 match err {
                     ScanError::UnexpectedChar { line } => {
                         // ...
-                        break;
+                    }
+                    ScanError::UnterminatedString { line } => {
+                        // ...
                     }
                 }
             }
