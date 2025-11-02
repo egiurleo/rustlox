@@ -5,6 +5,7 @@ use std::{env, fs, io, process::exit};
 mod chunk;
 mod compiler;
 mod debug;
+mod helpers;
 mod scanner;
 mod value;
 mod vm;
@@ -14,10 +15,8 @@ fn main() {
     let mut vm = VM::new();
 
     if args.len() == 1 {
-        println!("REPL");
         repl(&mut vm);
     } else if args.len() == 2 {
-        println!("RUN FILE");
         run_file(&args[1], &mut vm);
     } else {
         eprintln!("Usage:...");

@@ -39,7 +39,7 @@ impl VM {
     }
 
     pub fn interpret<W: Write>(&mut self, source: String, writer: &mut W) -> InterpretResult {
-        compile(source);
+        compile(source, writer);
         InterpretResult::Ok
     }
 

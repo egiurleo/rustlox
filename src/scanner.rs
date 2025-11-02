@@ -1,3 +1,4 @@
+use crate::helpers::{is_alpha, is_digit};
 use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
@@ -45,7 +46,8 @@ pub enum TokenType {
     True = 35,
     Var = 36,
     While = 37,
-    Eof = 38,
+    // Make EOF 38 to match the book, which has an extra token type
+    Eof = 39,
 }
 
 pub struct Token {
@@ -99,11 +101,11 @@ impl Scanner {
 
         let c = self.advance();
 
-        if self.is_alpha(c) {
+        if is_alpha(c) {
             return self.identifier();
         }
 
-        if self.is_digit(c) {
+        if is_digit(c) {
             return self.number();
         }
 
@@ -204,14 +206,14 @@ impl Scanner {
     }
 
     fn number(&mut self) -> Result<Token, ScanError> {
-        while self.is_digit(self.peek()) {
+        while is_digit(self.peek()) {
             self.advance();
         }
 
-        if self.peek() == b'.' && self.is_digit(self.peek_next()) {
+        if self.peek() == b'.' && is_digit(self.peek_next()) {
             self.advance();
 
-            while self.is_digit(self.peek()) {
+            while is_digit(self.peek()) {
                 self.advance();
             }
         }
@@ -220,7 +222,7 @@ impl Scanner {
     }
 
     fn identifier(&mut self) -> Result<Token, ScanError> {
-        while self.is_alpha(self.peek()) || self.is_digit(self.peek()) {
+        while is_alpha(self.peek()) || is_digit(self.peek()) {
             self.advance();
         }
 
@@ -328,14 +330,6 @@ impl Scanner {
             return b'\0';
         }
         self.source[self.current + 1]
-    }
-
-    fn is_digit(&self, c: u8) -> bool {
-        c.is_ascii_digit()
-    }
-
-    fn is_alpha(&self, c: u8) -> bool {
-        c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
     }
 }
 
