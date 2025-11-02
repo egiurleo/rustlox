@@ -8,7 +8,7 @@ const DEBUG_TRACE: bool = option_env!("DEBUG_TRACE_EXECUTION").is_some();
 
 const STACK_MAX: usize = 256;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum InterpretResult {
     InterpretOk = 0,
     InterpretCompileError = 1,
@@ -134,161 +134,78 @@ mod tests {
     #[test]
     fn interpret_constant_test() {
         let mut vm = VM::new();
-
-        let mut chunk = Chunk::new();
-        let constant = chunk.add_constant(1.2);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-        chunk.write(OpCode::Return as u8, 123);
-
         let mut output = Vec::new();
-        let result = vm.interpret(chunk, &mut output);
+        let source = "1.2".to_string();
+
+        let result = vm.interpret(source, &mut output);
+        assert_eq!(result, InterpretResult::InterpretOk);
 
         let output_str = String::from_utf8(output).unwrap();
-
-        match result {
-            InterpretResult::InterpretOk => assert!(true),
-        }
-
         assert_eq!(output_str, "1.2\n");
     }
 
     #[test]
     fn interpret_negation_test() {
         let mut vm = VM::new();
-
-        let mut chunk = Chunk::new();
-        let constant = chunk.add_constant(1.2);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-        chunk.write(OpCode::Negate as u8, 123);
-        chunk.write(OpCode::Return as u8, 123);
-
         let mut output = Vec::new();
-        let result = vm.interpret(chunk, &mut output);
+        let source = "return -1.2".to_string();
+
+        let result = vm.interpret(source, &mut output);
+        assert_eq!(result, InterpretResult::InterpretOk);
 
         let output_str = String::from_utf8(output).unwrap();
-
-        match result {
-            InterpretResult::InterpretOk => assert!(true),
-        }
-
         assert_eq!(output_str, "-1.2\n");
     }
 
     #[test]
     fn interpret_addition_test() {
         let mut vm = VM::new();
-
-        let mut chunk = Chunk::new();
-        let mut constant = chunk.add_constant(1.2);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        constant = chunk.add_constant(2.3);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        chunk.write(OpCode::Add as u8, 123);
-
-        chunk.write(OpCode::Return as u8, 123);
-
         let mut output = Vec::new();
-        let result = vm.interpret(chunk, &mut output);
+        let source = "return 1.2 + 2.3".to_string();
+
+        let result = vm.interpret(source, &mut output);
+        assert_eq!(result, InterpretResult::InterpretOk);
 
         let output_str = String::from_utf8(output).unwrap();
-
-        match result {
-            InterpretResult::InterpretOk => assert!(true),
-        }
-
         assert_eq!(output_str, "3.5\n");
     }
 
     #[test]
     fn interpret_subtraction_test() {
         let mut vm = VM::new();
-
-        let mut chunk = Chunk::new();
-        let mut constant = chunk.add_constant(1.5);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        constant = chunk.add_constant(0.3);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        chunk.write(OpCode::Subtract as u8, 123);
-
-        chunk.write(OpCode::Return as u8, 123);
-
         let mut output = Vec::new();
-        let result = vm.interpret(chunk, &mut output);
+        let source = "return 1.5 - 0.3".to_string();
+
+        let result = vm.interpret(source, &mut output);
+        assert_eq!(result, InterpretResult::InterpretOk);
 
         let output_str = String::from_utf8(output).unwrap();
-
-        match result {
-            InterpretResult::InterpretOk => assert!(true),
-        }
-
         assert_eq!(output_str, "1.2\n");
     }
 
     #[test]
     fn interpret_multiplication_test() {
         let mut vm = VM::new();
-
-        let mut chunk = Chunk::new();
-        let mut constant = chunk.add_constant(1.2);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        constant = chunk.add_constant(2.0);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        chunk.write(OpCode::Multiply as u8, 123);
-
-        chunk.write(OpCode::Return as u8, 123);
-
         let mut output = Vec::new();
-        let result = vm.interpret(chunk, &mut output);
+        let source = "return 1.2 * 2.0".to_string();
+
+        let result = vm.interpret(source, &mut output);
+        assert_eq!(result, InterpretResult::InterpretOk);
 
         let output_str = String::from_utf8(output).unwrap();
-
-        match result {
-            InterpretResult::InterpretOk => assert!(true),
-        }
-
         assert_eq!(output_str, "2.4\n");
     }
 
     #[test]
     fn interpret_division_test() {
         let mut vm = VM::new();
-
-        let mut chunk = Chunk::new();
-        let mut constant = chunk.add_constant(2.4);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        constant = chunk.add_constant(2.0);
-        chunk.write(OpCode::Constant as u8, 123);
-        chunk.write(constant as u8, 123);
-
-        chunk.write(OpCode::Divide as u8, 123);
-
-        chunk.write(OpCode::Return as u8, 123);
-
         let mut output = Vec::new();
-        let result = vm.interpret(chunk, &mut output);
+        let source = "return 2.4 / 2.0".to_string();
+
+        let result = vm.interpret(source, &mut output);
+        assert_eq!(result, InterpretResult::InterpretOk);
 
         let output_str = String::from_utf8(output).unwrap();
-
-        match result {
-            InterpretResult::InterpretOk => assert!(true),
-        }
-
         assert_eq!(output_str, "1.2\n");
     }
 }
