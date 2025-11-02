@@ -1,7 +1,7 @@
 use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
-#[derive(Copy, Clone, TryFromPrimitive)]
+#[derive(Copy, Clone, TryFromPrimitive, PartialEq, Debug)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen = 0,
@@ -49,10 +49,10 @@ pub enum TokenType {
 }
 
 pub struct Token {
-    token_type: TokenType,
-    start: usize,
-    length: usize,
-    line: usize,
+    pub token_type: TokenType,
+    pub start: usize,
+    pub length: usize,
+    pub line: usize,
 }
 
 impl Token {
@@ -66,6 +66,7 @@ impl Token {
     }
 }
 
+#[derive(Debug)]
 pub enum ScanError {
     UnexpectedChar { line: usize },
     UnterminatedString { line: usize },
@@ -173,7 +174,7 @@ impl Scanner {
     }
 
     fn is_at_end(&self) -> bool {
-        self.source[self.current] == b'\0'
+        self.current >= self.source.len()
     }
 
     fn make_token(&mut self, token_type: TokenType) -> Result<Token, ScanError> {
@@ -315,6 +316,10 @@ impl Scanner {
     }
 
     fn peek(&self) -> u8 {
+        if self.is_at_end() {
+            return b'\0';
+        }
+
         self.source[self.current]
     }
 
@@ -347,5 +352,135 @@ mod tests {
         assert_eq!(scanner.start, 0);
         assert_eq!(scanner.current, 0);
         assert_eq!(scanner.source, source.as_bytes());
+    }
+
+    #[test]
+    fn scan_basic_token_test() {
+        let source = "(){};,.-+/*! != = == < <= > >=".to_string();
+        let mut scanner = Scanner::new(&source);
+
+        let mut token: Token;
+
+        let token_types = [
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::LeftBrace,
+            TokenType::RightBrace,
+            TokenType::Semicolon,
+            TokenType::Comma,
+            TokenType::Dot,
+            TokenType::Minus,
+            TokenType::Plus,
+            TokenType::Slash,
+            TokenType::Star,
+            TokenType::Bang,
+            TokenType::BangEqual,
+            TokenType::Equal,
+            TokenType::EqualEqual,
+            TokenType::Less,
+            TokenType::LessEqual,
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::Eof,
+        ];
+
+        for token_type in token_types {
+            token = scanner.scan_token().unwrap();
+            assert_eq!(token.token_type, token_type);
+        }
+    }
+
+    #[test]
+    fn scan_identifier_test() {
+        let source = "apple and crazy class elephant else faint false for fun ice if nope nil oops or pretty print rope return sit super tiny this true vapid var wart while".to_string();
+        let mut scanner = Scanner::new(&source);
+
+        let mut token: Token;
+
+        let token_types = [
+            TokenType::Identifier,
+            TokenType::And,
+            TokenType::Identifier,
+            TokenType::Class,
+            TokenType::Identifier,
+            TokenType::Else,
+            TokenType::Identifier,
+            TokenType::False,
+            TokenType::For,
+            TokenType::Fun,
+            TokenType::Identifier,
+            TokenType::If,
+            TokenType::Identifier,
+            TokenType::Nil,
+            TokenType::Identifier,
+            TokenType::Or,
+            TokenType::Identifier,
+            TokenType::Print,
+            TokenType::Identifier,
+            TokenType::Return,
+            TokenType::Identifier,
+            TokenType::Super,
+            TokenType::Identifier,
+            TokenType::This,
+            TokenType::True,
+            TokenType::Identifier,
+            TokenType::Var,
+            TokenType::Identifier,
+            TokenType::While,
+        ];
+
+        for token_type in token_types {
+            token = scanner.scan_token().unwrap();
+            assert_eq!(token.token_type, token_type);
+        }
+    }
+
+    #[test]
+    fn scan_number_test() {
+        let source = "1 5.0 300 305.2".to_string();
+        let mut scanner = Scanner::new(&source);
+        let mut token: Token;
+
+        let token_types = [
+            TokenType::Number,
+            TokenType::Number,
+            TokenType::Number,
+            TokenType::Number,
+        ];
+
+        for token_type in token_types {
+            token = scanner.scan_token().unwrap();
+            assert_eq!(token.token_type, token_type);
+        }
+    }
+
+    #[test]
+    fn scan_string_test() {
+        let source = "\"Hello, world!\"".to_string();
+        let mut scanner = Scanner::new(&source);
+
+        let token = scanner.scan_token().unwrap();
+        assert_eq!(token.token_type, TokenType::String);
+    }
+
+    #[test]
+    fn scan_unterminated_string_test() {
+        let source = "\"Hello, world!".to_string();
+        let mut scanner = Scanner::new(&source);
+
+        let result = scanner.scan_token();
+        assert!(matches!(
+            result,
+            Err(ScanError::UnterminatedString { line: 1 })
+        ));
+    }
+
+    #[test]
+    fn scan_unexpected_char() {
+        let source = "#".to_string();
+        let mut scanner = Scanner::new(&source);
+
+        let result = scanner.scan_token();
+        assert!(matches!(result, Err(ScanError::UnexpectedChar { line: 1 })));
     }
 }
