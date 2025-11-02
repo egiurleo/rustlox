@@ -45,7 +45,7 @@ pub enum TokenType {
     True = 35,
     Var = 36,
     While = 37,
-    // Make EOF 38 to match the book, which has an extra token type
+    // Make EOF 39 to match the book, which has an extra token type
     Eof = 39,
 }
 
@@ -332,14 +332,6 @@ impl Scanner {
     }
 }
 
-fn is_digit(c: u8) -> bool {
-    c.is_ascii_digit()
-}
-
-fn is_alpha(c: u8) -> bool {
-    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -484,4 +476,12 @@ mod tests {
         let result = scanner.scan_token();
         assert!(matches!(result, Err(ScanError::UnexpectedChar { line: 1 })));
     }
+}
+
+fn is_digit(c: u8) -> bool {
+    c.is_ascii_digit()
+}
+
+fn is_alpha(c: u8) -> bool {
+    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
 }
