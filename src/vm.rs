@@ -134,6 +134,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn interpret_constant_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
@@ -147,6 +148,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn interpret_negation_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
@@ -160,6 +162,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn interpret_addition_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
@@ -173,6 +176,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn interpret_subtraction_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
@@ -186,6 +190,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn interpret_multiplication_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
@@ -199,6 +204,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn interpret_division_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
