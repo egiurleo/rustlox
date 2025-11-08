@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::chunk::{Chunk, OpCode};
-use crate::compiler::compile;
+use crate::compiler::Compiler;
 use crate::debug::disassemble_instruction;
 use crate::value::Value;
 use std::io::Write;
@@ -41,8 +41,16 @@ impl VM {
     }
 
     pub fn interpret<W: Write>(&mut self, source: String, writer: &mut W) -> InterpretResult {
-        compile(source, writer);
-        InterpretResult::Ok
+        let mut compiler = Compiler::new(&source, writer);
+        let chunk = Chunk::new();
+
+        if !compiler.compile(&chunk) {
+            return InterpretResult::CompileError;
+        }
+
+        self.chunk = chunk;
+
+        self.run(writer)
     }
 
     pub fn _reset_stack(&mut self) {

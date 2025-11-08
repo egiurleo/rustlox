@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
@@ -49,6 +50,7 @@ pub enum TokenType {
     Eof = 39,
 }
 
+#[derive(Copy, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub start: usize,
@@ -332,6 +334,14 @@ impl Scanner {
     }
 }
 
+fn is_digit(c: u8) -> bool {
+    c.is_ascii_digit()
+}
+
+fn is_alpha(c: u8) -> bool {
+    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -476,12 +486,4 @@ mod tests {
         let result = scanner.scan_token();
         assert!(matches!(result, Err(ScanError::UnexpectedChar { line: 1 })));
     }
-}
-
-fn is_digit(c: u8) -> bool {
-    c.is_ascii_digit()
-}
-
-fn is_alpha(c: u8) -> bool {
-    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
 }
