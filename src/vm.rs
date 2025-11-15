@@ -42,9 +42,9 @@ impl VM {
 
     pub fn interpret<W: Write>(&mut self, source: String, writer: &mut W) -> InterpretResult {
         let mut compiler = Compiler::new(&source, writer);
-        let chunk = Chunk::new();
+        let mut chunk = Chunk::new();
 
-        if !compiler.compile(&chunk) {
+        if !compiler.compile(&mut chunk) {
             return InterpretResult::CompileError;
         }
 

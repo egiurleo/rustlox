@@ -92,6 +92,11 @@ impl Scanner {
         }
     }
 
+    pub fn get_lexeme(&self, token: &Token) -> &str {
+        std::str::from_utf8(&self.source[token.start..token.start + token.length])
+            .unwrap()
+    }
+
     pub fn scan_token(&mut self) -> Result<Token, ScanError> {
         self.skip_whitespace();
 
