@@ -1,6 +1,7 @@
 use crate::chunk::{Chunk, OpCode};
 use crate::scanner::{ScanError, Scanner, Token, TokenType};
 use crate::value::Value;
+use num_enum::TryFromPrimitive;
 use std::io::Write;
 
 pub struct Compiler<'a, W: Write> {
@@ -50,7 +51,7 @@ impl<'a, W: Write> Compiler<'a, W> {
     }
 
     fn consume(&mut self, token_type: TokenType, message: &str) {
-        if self.parser.current.unwrap().token_type == token_type {
+        if self.parser.current().token_type == token_type {
             self.advance();
             return;
         }
@@ -59,7 +60,7 @@ impl<'a, W: Write> Compiler<'a, W> {
     }
 
     fn emit_byte(&mut self, byte: u8) {
-        let line = self.parser.previous.unwrap().line;
+        let line = self.parser.previous().line;
         self.current_chunk().write(byte, line);
     }
 
@@ -85,7 +86,7 @@ impl<'a, W: Write> Compiler<'a, W> {
     }
 
     fn number(&mut self) {
-        let lexeme = self.scanner.get_lexeme(&self.parser.previous.unwrap());
+        let lexeme = self.scanner.get_lexeme(&self.parser.previous());
         let value: f64 = lexeme.parse().expect("Failed to parse number");
 
         self.emit_constant(value);
@@ -113,17 +114,135 @@ impl<'a, W: Write> Compiler<'a, W> {
     }
 
     fn unary(&mut self) {
-        let operator_type = self.parser.previous.unwrap().token_type;
+        let operator_type = self.parser.previous().token_type;
 
         self.parse_precedence(Precedence::Unary);
 
-        match operator_type {
-            TokenType::Minus => self.emit_byte(OpCode::Negate as u8),
-            _ => return,
+        if operator_type == TokenType::Minus {
+            self.emit_byte(OpCode::Negate as u8)
         }
     }
 
-    fn parse_precedence(&mut self, precedence: Precedence) {}
+    fn binary(&mut self) {
+        let operator_type = self.parser.previous().token_type;
+        let parse_rule = self.get_rule(operator_type);
+
+        let precedence =
+            Precedence::try_from(parse_rule.precedence as u8 + 1).expect("Invalid precedence");
+
+        self.parse_precedence(precedence);
+
+        match operator_type {
+            TokenType::Plus => self.emit_byte(OpCode::Add as u8),
+            TokenType::Minus => self.emit_byte(OpCode::Subtract as u8),
+            TokenType::Star => self.emit_byte(OpCode::Multiply as u8),
+            TokenType::Slash => self.emit_byte(OpCode::Divide as u8),
+            _ => (),
+        }
+    }
+
+    fn parse_precedence(&mut self, precedence: Precedence) {
+        self.advance();
+
+        let previous = self.parser.previous();
+        let prefix_rule = self.get_rule(previous.token_type).prefix;
+
+        // TODO: refactor
+        if prefix_rule.is_none() {
+            self.parser.error("Expect expression.");
+            return;
+        }
+
+        prefix_rule.unwrap()(self);
+
+        loop {
+            let current_type = self.parser.current().token_type;
+            if precedence > self.get_rule(current_type).precedence {
+                break;
+            }
+
+            self.advance();
+            let previous_type = self.parser.previous().token_type;
+            let infix_rule = self.get_rule(previous_type).infix;
+
+            infix_rule.unwrap()(self);
+        }
+    }
+
+    fn get_rule(&self, token_type: TokenType) -> ParseRule<'a, W> {
+        match token_type {
+            TokenType::LeftParen => ParseRule {
+                prefix: Some(Compiler::grouping),
+                infix: None,
+                precedence: Precedence::None,
+            },
+            TokenType::Minus => ParseRule {
+                prefix: Some(Compiler::unary),
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Term,
+            },
+            TokenType::Plus => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Term,
+            },
+            TokenType::Slash => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Factor,
+            },
+            TokenType::Star => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Factor,
+            },
+            TokenType::Number => ParseRule {
+                prefix: Some(Compiler::number),
+                infix: None,
+                precedence: Precedence::None,
+            },
+            TokenType::Bang => ParseRule {
+                prefix: Some(Compiler::unary),
+                infix: None,
+                precedence: Precedence::None,
+            },
+            TokenType::BangEqual => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Equality,
+            },
+            TokenType::EqualEqual => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Equality,
+            },
+            TokenType::Greater => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Comparison,
+            },
+            TokenType::GreaterEqual => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Comparison,
+            },
+            TokenType::Less => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Comparison,
+            },
+            TokenType::LessEqual => ParseRule {
+                prefix: None,
+                infix: Some(Compiler::binary),
+                precedence: Precedence::Comparison,
+            },
+            _ => ParseRule {
+                prefix: None,
+                infix: None,
+                precedence: Precedence::None,
+            },
+        }
+    }
 }
 
 struct Parser<'a, W: Write> {
@@ -171,18 +290,36 @@ impl<'a, W: Write> Parser<'a, W> {
         writeln!(&mut self.writer, ": {}", message).unwrap();
         self.had_error = true;
     }
+
+    pub fn previous(&mut self) -> Token {
+        self.previous.unwrap()
+    }
+
+    pub fn current(&mut self) -> Token {
+        self.current.unwrap()
+    }
 }
 
+#[repr(u8)]
+#[derive(TryFromPrimitive, std::cmp::PartialOrd, std::cmp::PartialEq)]
 enum Precedence {
-    None,
-    Assignment,
-    Or,
-    And,
-    Equality,
-    Comparison,
-    Term,
-    Factor,
-    Unary,
-    Call,
-    Primary,
+    None = 0,
+    Assignment = 1,
+    Or = 2,
+    And = 3,
+    Equality = 4,
+    Comparison = 5,
+    Term = 6,
+    Factor = 7,
+    Unary = 8,
+    Call = 9,
+    Primary = 10,
+}
+
+type ParseFn<'a, W: Write> = fn(&mut Compiler<'a, W>);
+
+struct ParseRule<'a, W: Write> {
+    prefix: Option<ParseFn<'a, W>>,
+    infix: Option<ParseFn<'a, W>>,
+    precedence: Precedence,
 }
