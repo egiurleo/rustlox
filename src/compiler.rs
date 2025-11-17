@@ -1,8 +1,11 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::debug::disassemble_chunk;
 use crate::scanner::{ScanError, Scanner, Token, TokenType};
 use crate::value::Value;
 use num_enum::TryFromPrimitive;
 use std::io::Write;
+
+const DEBUG_PRINT_CODE: bool = option_env!("DEBUG_PRINT_CODE").is_some();
 
 pub struct Compiler<'a, W: Write> {
     parser: Parser<'a, W>,
@@ -75,6 +78,11 @@ impl<'a, W: Write> Compiler<'a, W> {
 
     fn end_compiler(&mut self) {
         self.emit_return();
+
+        if DEBUG_PRINT_CODE {
+            let current_chunk = self.compiling_chunk.as_ref().unwrap();
+            self.parser.disassemble_chunk(current_chunk);
+        }
     }
 
     fn emit_return(&mut self) {
@@ -298,6 +306,12 @@ impl<'a, W: Write> Parser<'a, W> {
     pub fn current(&mut self) -> Token {
         self.current.unwrap()
     }
+
+    pub fn disassemble_chunk(&mut self, current_chunk: &Chunk) {
+        if !self.had_error {
+            disassemble_chunk(current_chunk, "code", self.writer);
+        }
+    }
 }
 
 #[repr(u8)]
@@ -316,7 +330,7 @@ enum Precedence {
     Primary = 10,
 }
 
-type ParseFn<'a, W: Write> = fn(&mut Compiler<'a, W>);
+type ParseFn<'a, W> = fn(&mut Compiler<'a, W>);
 
 struct ParseRule<'a, W: Write> {
     prefix: Option<ParseFn<'a, W>>,
