@@ -5,6 +5,7 @@ use std::{env, fs, io, process::exit};
 mod chunk;
 mod compiler;
 mod debug;
+mod parser;
 mod scanner;
 mod value;
 mod vm;

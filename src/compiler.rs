@@ -1,6 +1,6 @@
 use crate::chunk::{Chunk, OpCode};
-use crate::debug::disassemble_chunk;
-use crate::scanner::{ScanError, Scanner, Token, TokenType};
+use crate::parser::Parser;
+use crate::scanner::{ScanError, Scanner, TokenType};
 use crate::value::Value;
 use num_enum::TryFromPrimitive;
 use std::io::Write;
@@ -253,70 +253,9 @@ impl<'a, W: Write> Compiler<'a, W> {
     }
 }
 
-struct Parser<'a, W: Write> {
-    pub current: Option<Token>,
-    pub previous: Option<Token>,
-    writer: &'a mut W,
-    had_error: bool,
-    panic_mode: bool,
-}
-
-impl<'a, W: Write> Parser<'a, W> {
-    pub fn new(writer: &'a mut W) -> Self {
-        Parser {
-            current: None,
-            previous: None,
-            writer,
-            had_error: false,
-            panic_mode: false,
-        }
-    }
-
-    pub fn error_at_current(&mut self, message: &str) {
-        self.error_at(&self.current.unwrap(), message);
-    }
-
-    pub fn error(&mut self, message: &str) {
-        self.error_at(&self.previous.unwrap(), message);
-    }
-
-    fn error_at(&mut self, token: &Token, message: &str) {
-        if self.panic_mode {
-            return;
-        }
-
-        self.panic_mode = true;
-
-        write!(&mut self.writer, "[line {}] Error", token.line).unwrap();
-
-        if token.token_type == TokenType::Eof {
-            write!(&mut self.writer, " at end").unwrap();
-        } else {
-            write!(&mut self.writer, " at <something here>").unwrap();
-        }
-
-        writeln!(&mut self.writer, ": {}", message).unwrap();
-        self.had_error = true;
-    }
-
-    pub fn previous(&mut self) -> Token {
-        self.previous.unwrap()
-    }
-
-    pub fn current(&mut self) -> Token {
-        self.current.unwrap()
-    }
-
-    pub fn disassemble_chunk(&mut self, current_chunk: &Chunk) {
-        if !self.had_error {
-            disassemble_chunk(current_chunk, "code", self.writer);
-        }
-    }
-}
-
 #[repr(u8)]
 #[derive(TryFromPrimitive, std::cmp::PartialOrd, std::cmp::PartialEq)]
-enum Precedence {
+pub enum Precedence {
     None = 0,
     Assignment = 1,
     Or = 2,
@@ -330,9 +269,9 @@ enum Precedence {
     Primary = 10,
 }
 
-type ParseFn<'a, W> = fn(&mut Compiler<'a, W>);
+pub type ParseFn<'a, W> = fn(&mut Compiler<'a, W>);
 
-struct ParseRule<'a, W: Write> {
+pub struct ParseRule<'a, W: Write> {
     prefix: Option<ParseFn<'a, W>>,
     infix: Option<ParseFn<'a, W>>,
     precedence: Precedence,
