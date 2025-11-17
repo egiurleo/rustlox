@@ -42,10 +42,10 @@ impl<'a, W: Write> Compiler<'a, W> {
                     self.parser.current = Some(token);
                 }
                 Err(err) => match err {
-                    ScanError::UnexpectedChar { line: _ } => {
+                    ScanError::UnexpectedChar {} => {
                         self.parser.error_at_current("Unexpected character");
                     }
-                    ScanError::UnterminatedString { line: _ } => {
+                    ScanError::UnterminatedString {} => {
                         self.parser.error_at_current("Unterminated string");
                     }
                 },

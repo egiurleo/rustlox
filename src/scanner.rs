@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
@@ -71,8 +70,8 @@ impl Token {
 
 #[derive(Debug)]
 pub enum ScanError {
-    UnexpectedChar { line: usize },
-    UnterminatedString { line: usize },
+    UnexpectedChar {},
+    UnterminatedString {},
 }
 
 #[derive(Default)]
@@ -93,8 +92,7 @@ impl Scanner {
     }
 
     pub fn get_lexeme(&self, token: &Token) -> &str {
-        std::str::from_utf8(&self.source[token.start..token.start + token.length])
-            .unwrap()
+        std::str::from_utf8(&self.source[token.start..token.start + token.length]).unwrap()
     }
 
     pub fn scan_token(&mut self) -> Result<Token, ScanError> {
@@ -160,7 +158,7 @@ impl Scanner {
                 self.make_token(token_type)
             }
             b'"' => self.string(),
-            _ => Err(ScanError::UnexpectedChar { line: self.line }),
+            _ => Err(ScanError::UnexpectedChar {}),
         }
     }
 
@@ -203,7 +201,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            return Err(ScanError::UnterminatedString { line: (self.line) });
+            return Err(ScanError::UnterminatedString {});
         }
 
         self.advance();
@@ -477,10 +475,7 @@ mod tests {
         let mut scanner = Scanner::new(&source);
 
         let result = scanner.scan_token();
-        assert!(matches!(
-            result,
-            Err(ScanError::UnterminatedString { line: 1 })
-        ));
+        assert!(matches!(result, Err(ScanError::UnterminatedString {})));
     }
 
     #[test]
@@ -489,6 +484,6 @@ mod tests {
         let mut scanner = Scanner::new(&source);
 
         let result = scanner.scan_token();
-        assert!(matches!(result, Err(ScanError::UnexpectedChar { line: 1 })));
+        assert!(matches!(result, Err(ScanError::UnexpectedChar {})));
     }
 }

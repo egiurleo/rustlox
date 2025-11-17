@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::value::{Value, ValueArray};
 use num_enum::TryFromPrimitive;
 
