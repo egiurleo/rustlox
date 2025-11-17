@@ -42,12 +42,10 @@ fn run_file(path: &String, vm: &mut VM) {
     let source = read_file(path);
     let result = vm.interpret(source, &mut std::io::stdout());
 
-    if result == InterpretResult::CompileError {
-        exit(65);
-    }
-
-    if result == InterpretResult::RuntimeError {
-        exit(70);
+    match result {
+        InterpretResult::CompileError => exit(65),
+        InterpretResult::RuntimeError => exit(70),
+        InterpretResult::Ok => (),
     }
 }
 
