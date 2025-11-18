@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::chunk::{Chunk, OpCode};
-use crate::compiler::compile;
+use crate::compiler::Compiler;
 use crate::debug::disassemble_instruction;
 use crate::value::Value;
 use std::io::Write;
@@ -41,8 +41,20 @@ impl VM {
     }
 
     pub fn interpret<W: Write>(&mut self, source: String, writer: &mut W) -> InterpretResult {
-        compile(source, writer);
-        InterpretResult::Ok
+        let source_vec = source.as_bytes().to_vec();
+
+        let mut compiler = Compiler::new(&source_vec, writer);
+        let mut chunk = Chunk::new();
+
+        if !compiler.compile(&mut chunk) {
+            return InterpretResult::CompileError;
+        }
+
+        self.chunk = chunk;
+        self.ip = 0;
+        self.stack_top = 0;
+
+        self.run(writer)
     }
 
     pub fn _reset_stack(&mut self) {
@@ -134,7 +146,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
     fn interpret_constant_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
@@ -148,11 +159,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_negation_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return -1.2".to_string();
+        let source = "-1.2".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -162,11 +172,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_addition_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 1.2 + 2.3".to_string();
+        let source = "1.2 + 2.3".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -176,11 +185,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_subtraction_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 1.5 - 0.3".to_string();
+        let source = "1.5 - 0.3".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -190,11 +198,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_multiplication_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 1.2 * 2.0".to_string();
+        let source = "1.2 * 2.0".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -204,11 +211,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_division_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 2.4 / 2.0".to_string();
+        let source = "2.4 / 2.0".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);

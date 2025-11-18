@@ -49,6 +49,7 @@ pub enum TokenType {
     Eof = 39,
 }
 
+#[derive(Copy, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub start: usize,
@@ -69,25 +70,29 @@ impl Token {
 
 #[derive(Debug)]
 pub enum ScanError {
-    UnexpectedChar { line: usize },
-    UnterminatedString { line: usize },
+    UnexpectedChar {},
+    UnterminatedString {},
 }
 
-#[derive(Default)]
-pub struct Scanner {
+pub struct Scanner<'a> {
     line: usize,
     start: usize,
     current: usize,
-    source: Vec<u8>,
+    source: &'a Vec<u8>,
 }
 
-impl Scanner {
-    pub fn new(source: &String) -> Self {
+impl<'a> Scanner<'a> {
+    pub fn new(source: &'a Vec<u8>) -> Self {
         Scanner {
-            source: source.as_bytes().to_vec(),
+            start: 0,
+            current: 0,
             line: 1,
-            ..Default::default()
+            source,
         }
+    }
+
+    pub fn get_lexeme(&self, token: &Token) -> &str {
+        std::str::from_utf8(&self.source[token.start..token.start + token.length]).unwrap()
     }
 
     pub fn scan_token(&mut self) -> Result<Token, ScanError> {
@@ -153,7 +158,7 @@ impl Scanner {
                 self.make_token(token_type)
             }
             b'"' => self.string(),
-            _ => Err(ScanError::UnexpectedChar { line: self.line }),
+            _ => Err(ScanError::UnexpectedChar {}),
         }
     }
 
@@ -196,7 +201,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            return Err(ScanError::UnterminatedString { line: (self.line) });
+            return Err(ScanError::UnterminatedString {});
         }
 
         self.advance();
@@ -332,24 +337,32 @@ impl Scanner {
     }
 }
 
+fn is_digit(c: u8) -> bool {
+    c.is_ascii_digit()
+}
+
+fn is_alpha(c: u8) -> bool {
+    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn init_scanner_test() {
-        let source = "Hello, world!".to_string();
+        let source = "Hello, world!".as_bytes().to_vec();
         let scanner = Scanner::new(&source);
 
         assert_eq!(scanner.line, 1);
         assert_eq!(scanner.start, 0);
         assert_eq!(scanner.current, 0);
-        assert_eq!(scanner.source, source.as_bytes());
+        assert_eq!(scanner.source, &source);
     }
 
     #[test]
     fn scan_basic_token_test() {
-        let source = "(){};,.-+/*! != = == < <= > >=".to_string();
+        let source = "(){};,.-+/*! != = == < <= > >=".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let mut token: Token;
@@ -385,7 +398,7 @@ mod tests {
 
     #[test]
     fn scan_identifier_test() {
-        let source = "apple and crazy class elephant else faint false for fun ice if nope nil oops or pretty print rope return sit super tiny this true vapid var wart while".to_string();
+        let source = "apple and crazy class elephant else faint false for fun ice if nope nil oops or pretty print rope return sit super tiny this true vapid var wart while".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let mut token: Token;
@@ -430,7 +443,7 @@ mod tests {
 
     #[test]
     fn scan_number_test() {
-        let source = "1 5.0 300 305.2".to_string();
+        let source = "1 5.0 300 305.2".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
         let mut token: Token;
 
@@ -449,7 +462,7 @@ mod tests {
 
     #[test]
     fn scan_string_test() {
-        let source = "\"Hello, world!\"".to_string();
+        let source = "\"Hello, world!\"".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let token = scanner.scan_token().unwrap();
@@ -458,30 +471,19 @@ mod tests {
 
     #[test]
     fn scan_unterminated_string_test() {
-        let source = "\"Hello, world!".to_string();
+        let source = "\"Hello, world!".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let result = scanner.scan_token();
-        assert!(matches!(
-            result,
-            Err(ScanError::UnterminatedString { line: 1 })
-        ));
+        assert!(matches!(result, Err(ScanError::UnterminatedString {})));
     }
 
     #[test]
     fn scan_unexpected_char() {
-        let source = "#".to_string();
+        let source = "#".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let result = scanner.scan_token();
-        assert!(matches!(result, Err(ScanError::UnexpectedChar { line: 1 })));
+        assert!(matches!(result, Err(ScanError::UnexpectedChar {})));
     }
-}
-
-fn is_digit(c: u8) -> bool {
-    c.is_ascii_digit()
-}
-
-fn is_alpha(c: u8) -> bool {
-    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == b'_'
 }
