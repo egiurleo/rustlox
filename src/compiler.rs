@@ -40,6 +40,7 @@ impl<'a, W: Write> Compiler<'a, W> {
             match self.scanner.scan_token() {
                 Ok(token) => {
                     self.parser.current = Some(token);
+                    break;
                 }
                 Err(err) => match err {
                     ScanError::UnexpectedChar {} => {
@@ -275,4 +276,196 @@ pub struct ParseRule<'a, W: Write> {
     prefix: Option<ParseFn<'a, W>>,
     infix: Option<ParseFn<'a, W>>,
     precedence: Precedence,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_compiler_test() {
+        let source = "123".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let compiler = Compiler::new(&source, &mut output);
+
+        // Verify the compiler is created with expected initial state
+        assert!(compiler.compiling_chunk.is_none());
+        assert!(!compiler.parser.had_error);
+    }
+
+    #[test]
+    fn compile_simple_number_test() {
+        let source = "42".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result); // Compilation should succeed
+        assert!(!compiler.parser.had_error);
+
+        assert_eq!(chunk.code.len(), 3);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[1], 0); // Index of the constant
+        assert_eq!(chunk.code[2], OpCode::Return as u8);
+
+        assert_eq!(chunk.constants.len(), 1);
+        assert_eq!(chunk.constants.at(0), 42.0);
+    }
+
+    #[test]
+    fn compile_addition_test() {
+        let source = "1 + 2".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result);
+        assert!(!compiler.parser.had_error);
+        // Should have: CONSTANT, 0, CONSTANT, 1, ADD, RETURN
+        assert_eq!(chunk.code.len(), 6);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[1], 0); // Index of first constant
+        assert_eq!(chunk.code[2], OpCode::Constant as u8);
+        assert_eq!(chunk.code[3], 1); // Index of second constant
+        assert_eq!(chunk.code[4], OpCode::Add as u8);
+        assert_eq!(chunk.code[5], OpCode::Return as u8);
+        assert_eq!(chunk.constants.len(), 2);
+        assert_eq!(chunk.constants.at(0), 1.0);
+        assert_eq!(chunk.constants.at(1), 2.0);
+    }
+
+    #[test]
+    fn compile_multiplication_test() {
+        let source = "3 * 4".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result);
+        assert!(!compiler.parser.had_error);
+        // Should have: CONSTANT, 0, CONSTANT, 1, MULTIPLY, RETURN
+        assert_eq!(chunk.code.len(), 6);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[1], 0);
+        assert_eq!(chunk.code[2], OpCode::Constant as u8);
+        assert_eq!(chunk.code[3], 1);
+        assert_eq!(chunk.code[4], OpCode::Multiply as u8);
+        assert_eq!(chunk.code[5], OpCode::Return as u8);
+        assert_eq!(chunk.constants.at(0), 3.0);
+        assert_eq!(chunk.constants.at(1), 4.0);
+    }
+
+    #[test]
+    fn compile_unary_negation_test() {
+        let source = "-5".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result);
+        assert!(!compiler.parser.had_error);
+        // Should have: CONSTANT, 0, NEGATE, RETURN
+        assert_eq!(chunk.code.len(), 4);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[1], 0);
+        assert_eq!(chunk.code[2], OpCode::Negate as u8);
+        assert_eq!(chunk.code[3], OpCode::Return as u8);
+        assert_eq!(chunk.constants.at(0), 5.0);
+    }
+
+    #[test]
+    fn compile_grouping_test() {
+        let source = "(1 + 2)".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result);
+        assert!(!compiler.parser.had_error);
+        // Should have: CONSTANT, 0, CONSTANT, 1, ADD, RETURN
+        assert_eq!(chunk.code.len(), 6);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[2], OpCode::Constant as u8);
+        assert_eq!(chunk.code[4], OpCode::Add as u8);
+        assert_eq!(chunk.code[5], OpCode::Return as u8);
+    }
+
+    #[test]
+    fn compile_precedence_test() {
+        let source = "1 + 2 * 3".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result);
+        assert!(!compiler.parser.had_error);
+        // Should evaluate as 1 + (2 * 3), so: CONSTANT(1), CONSTANT(2), CONSTANT(3), MULTIPLY, ADD, RETURN
+        assert_eq!(chunk.code.len(), 9);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[1], 0); // 1
+        assert_eq!(chunk.code[2], OpCode::Constant as u8);
+        assert_eq!(chunk.code[3], 1); // 2
+        assert_eq!(chunk.code[4], OpCode::Constant as u8);
+        assert_eq!(chunk.code[5], 2); // 3
+        assert_eq!(chunk.code[6], OpCode::Multiply as u8);
+        assert_eq!(chunk.code[7], OpCode::Add as u8);
+        assert_eq!(chunk.code[8], OpCode::Return as u8);
+        assert_eq!(chunk.constants.at(0), 1.0);
+        assert_eq!(chunk.constants.at(1), 2.0);
+        assert_eq!(chunk.constants.at(2), 3.0);
+    }
+
+    #[test]
+    fn compile_subtraction_and_division_test() {
+        let source = "10 - 2 / 2".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result);
+        assert!(!compiler.parser.had_error);
+        // Should evaluate as 10 - (2 / 2): CONSTANT(10), CONSTANT(2), CONSTANT(2), DIVIDE, SUBTRACT, RETURN
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[2], OpCode::Constant as u8);
+        assert_eq!(chunk.code[4], OpCode::Constant as u8);
+        assert_eq!(chunk.code[6], OpCode::Divide as u8);
+        assert_eq!(chunk.code[7], OpCode::Subtract as u8);
+        assert_eq!(chunk.code[8], OpCode::Return as u8);
+    }
+
+    #[test]
+    fn compile_complex_expression_test() {
+        let source = "-(1 + 2) * 3".as_bytes().to_vec();
+        let mut output = Vec::new();
+        let mut compiler = Compiler::new(&source, &mut output);
+        let mut chunk = Chunk::new();
+
+        let result = compiler.compile(&mut chunk);
+
+        assert!(result);
+        assert!(!compiler.parser.had_error);
+        // Should evaluate as (-(1 + 2)) * 3
+        // CONSTANT(1), CONSTANT(2), ADD, NEGATE, CONSTANT(3), MULTIPLY, RETURN
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[2], OpCode::Constant as u8);
+        assert_eq!(chunk.code[4], OpCode::Add as u8);
+        assert_eq!(chunk.code[5], OpCode::Negate as u8);
+        assert_eq!(chunk.code[6], OpCode::Constant as u8);
+        assert_eq!(chunk.code[8], OpCode::Multiply as u8);
+        assert_eq!(chunk.code[9], OpCode::Return as u8);
+    }
 }
