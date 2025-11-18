@@ -144,7 +144,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
     fn interpret_constant_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
@@ -158,11 +157,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_negation_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return -1.2".to_string();
+        let source = "-1.2".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -172,11 +170,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_addition_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 1.2 + 2.3".to_string();
+        let source = "1.2 + 2.3".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -186,11 +183,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_subtraction_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 1.5 - 0.3".to_string();
+        let source = "1.5 - 0.3".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -200,11 +196,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_multiplication_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 1.2 * 2.0".to_string();
+        let source = "1.2 * 2.0".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
@@ -214,11 +209,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn interpret_division_test() {
         let mut vm = VM::new();
         let mut output = Vec::new();
-        let source = "return 2.4 / 2.0".to_string();
+        let source = "2.4 / 2.0".to_string();
 
         let result = vm.interpret(source, &mut output);
         assert_eq!(result, InterpretResult::Ok);
