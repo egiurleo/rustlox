@@ -9,14 +9,14 @@ const DEBUG_PRINT_CODE: bool = option_env!("DEBUG_PRINT_CODE").is_some();
 
 pub struct Compiler<'a, W: Write> {
     parser: Parser<'a, W>,
-    scanner: Scanner,
+    scanner: Scanner<'a>,
     compiling_chunk: Option<&'a mut Chunk>,
 }
 
 impl<'a, W: Write> Compiler<'a, W> {
-    pub fn new(source: &String, writer: &'a mut W) -> Self {
+    pub fn new(source: &'a Vec<u8>, writer: &'a mut W) -> Self {
         Compiler {
-            parser: Parser::new(writer),
+            parser: Parser::new(source, writer),
             scanner: Scanner::new(source),
             compiling_chunk: None,
         }

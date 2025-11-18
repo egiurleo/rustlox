@@ -74,20 +74,20 @@ pub enum ScanError {
     UnterminatedString {},
 }
 
-#[derive(Default)]
-pub struct Scanner {
+pub struct Scanner<'a> {
     line: usize,
     start: usize,
     current: usize,
-    source: Vec<u8>,
+    source: &'a Vec<u8>,
 }
 
-impl Scanner {
-    pub fn new(source: &String) -> Self {
+impl<'a> Scanner<'a> {
+    pub fn new(source: &'a Vec<u8>) -> Self {
         Scanner {
-            source: source.as_bytes().to_vec(),
+            start: 0,
+            current: 0,
             line: 1,
-            ..Default::default()
+            source,
         }
     }
 
@@ -351,18 +351,18 @@ mod tests {
 
     #[test]
     fn init_scanner_test() {
-        let source = "Hello, world!".to_string();
+        let source = "Hello, world!".as_bytes().to_vec();
         let scanner = Scanner::new(&source);
 
         assert_eq!(scanner.line, 1);
         assert_eq!(scanner.start, 0);
         assert_eq!(scanner.current, 0);
-        assert_eq!(scanner.source, source.as_bytes());
+        assert_eq!(scanner.source, &source);
     }
 
     #[test]
     fn scan_basic_token_test() {
-        let source = "(){};,.-+/*! != = == < <= > >=".to_string();
+        let source = "(){};,.-+/*! != = == < <= > >=".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let mut token: Token;
@@ -398,7 +398,7 @@ mod tests {
 
     #[test]
     fn scan_identifier_test() {
-        let source = "apple and crazy class elephant else faint false for fun ice if nope nil oops or pretty print rope return sit super tiny this true vapid var wart while".to_string();
+        let source = "apple and crazy class elephant else faint false for fun ice if nope nil oops or pretty print rope return sit super tiny this true vapid var wart while".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let mut token: Token;
@@ -443,7 +443,7 @@ mod tests {
 
     #[test]
     fn scan_number_test() {
-        let source = "1 5.0 300 305.2".to_string();
+        let source = "1 5.0 300 305.2".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
         let mut token: Token;
 
@@ -462,7 +462,7 @@ mod tests {
 
     #[test]
     fn scan_string_test() {
-        let source = "\"Hello, world!\"".to_string();
+        let source = "\"Hello, world!\"".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let token = scanner.scan_token().unwrap();
@@ -471,7 +471,7 @@ mod tests {
 
     #[test]
     fn scan_unterminated_string_test() {
-        let source = "\"Hello, world!".to_string();
+        let source = "\"Hello, world!".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let result = scanner.scan_token();
@@ -480,7 +480,7 @@ mod tests {
 
     #[test]
     fn scan_unexpected_char() {
-        let source = "#".to_string();
+        let source = "#".as_bytes().to_vec();
         let mut scanner = Scanner::new(&source);
 
         let result = scanner.scan_token();

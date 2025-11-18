@@ -41,7 +41,9 @@ impl VM {
     }
 
     pub fn interpret<W: Write>(&mut self, source: String, writer: &mut W) -> InterpretResult {
-        let mut compiler = Compiler::new(&source, writer);
+        let source_vec = source.as_bytes().to_vec();
+
+        let mut compiler = Compiler::new(&source_vec, writer);
         let mut chunk = Chunk::new();
 
         if !compiler.compile(&mut chunk) {
