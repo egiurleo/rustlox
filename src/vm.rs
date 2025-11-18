@@ -51,6 +51,8 @@ impl VM {
         }
 
         self.chunk = chunk;
+        self.ip = 0;
+        self.stack_top = 0;
 
         self.run(writer)
     }
