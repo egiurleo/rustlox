@@ -1,9 +1,7 @@
-#![allow(dead_code)]
-
 use crate::chunk::{Chunk, OpCode};
 use std::io::Write;
 
-pub fn _disassemble_chunk<W: Write>(chunk: &Chunk, name: &str, writer: &mut W) {
+pub fn disassemble_chunk<W: Write>(chunk: &Chunk, name: &str, writer: &mut W) {
     writeln!(writer, "== {} ==", name).unwrap();
 
     let mut offset = 0;
@@ -66,7 +64,7 @@ mod tests {
         chunk.write(OpCode::Return as u8, 123);
 
         let mut output = Vec::new();
-        _disassemble_chunk(&chunk, "test chunk", &mut output);
+        disassemble_chunk(&chunk, "test chunk", &mut output);
 
         let output_str = String::from_utf8(output).unwrap();
 
@@ -87,7 +85,7 @@ mod tests {
         chunk.write(OpCode::Return as u8, 123);
 
         let mut output = Vec::new();
-        _disassemble_chunk(&chunk, "test chunk", &mut output);
+        disassemble_chunk(&chunk, "test chunk", &mut output);
 
         let output_str = String::from_utf8(output).unwrap();
 
@@ -110,7 +108,7 @@ mod tests {
         chunk.write(OpCode::Return as u8, 123);
 
         let mut output = Vec::new();
-        _disassemble_chunk(&chunk, "test chunk", &mut output);
+        disassemble_chunk(&chunk, "test chunk", &mut output);
 
         let output_str = String::from_utf8(output).unwrap();
 
@@ -139,7 +137,7 @@ mod tests {
         chunk.write(OpCode::Return as u8, 123);
 
         let mut output = Vec::new();
-        _disassemble_chunk(&chunk, "test chunk", &mut output);
+        disassemble_chunk(&chunk, "test chunk", &mut output);
 
         let output_str = String::from_utf8(output).unwrap();
 
@@ -169,7 +167,7 @@ mod tests {
         chunk.write(OpCode::Return as u8, 123);
 
         let mut output = Vec::new();
-        _disassemble_chunk(&chunk, "test chunk", &mut output);
+        disassemble_chunk(&chunk, "test chunk", &mut output);
 
         let output_str = String::from_utf8(output).unwrap();
 
@@ -199,7 +197,7 @@ mod tests {
         chunk.write(OpCode::Return as u8, 123);
 
         let mut output = Vec::new();
-        _disassemble_chunk(&chunk, "test chunk", &mut output);
+        disassemble_chunk(&chunk, "test chunk", &mut output);
 
         let output_str = String::from_utf8(output).unwrap();
 
@@ -229,7 +227,7 @@ mod tests {
         chunk.write(OpCode::Return as u8, 123);
 
         let mut output = Vec::new();
-        _disassemble_chunk(&chunk, "test chunk", &mut output);
+        disassemble_chunk(&chunk, "test chunk", &mut output);
 
         let output_str = String::from_utf8(output).unwrap();
 
